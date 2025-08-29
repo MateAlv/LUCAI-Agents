@@ -17,7 +17,6 @@ pip-wheel-metadata/
 Thumbs.db
 
 # Proyecto
-output/
 .env
 config/*.secrets.yaml
 config/*.local.yaml
