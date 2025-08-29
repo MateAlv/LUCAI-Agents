@@ -1,0 +1,7 @@
+﻿requests>=2.32
+feedparser>=6.0
+trafilatura>=1.8
+pydantic>=2.7
+python-dotenv>=1.0
+numpy>=1.26
+sentence-transformers>=3.0
