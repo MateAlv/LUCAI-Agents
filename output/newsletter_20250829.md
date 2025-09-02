@@ -1,12 +1,6 @@
 # Bio Watchdog — Newsletter
 
-## Tecnología (biotech) — 10 items
-
-### Plinio Nastari fue distinguido como Doctor Honoris Causa por la USP-T en reconocimiento a su legado en bioenergía [AR|WATCH]
-*2025-08-28* — https://www.bioeconomia.info/2025/08/28/plinio-nastari-doctor-honoris-causa-biocombustibles/
-- La historia moderna de los biocombustibles no puede entenderse sin el aporte de Brasil, país que desde hace décadas convirtió al etanol en una pieza central de su matriz energética. Ese liderazgo no surgió por azar, sino
-- La ceremonia tuvo lugar en el Salón Oval del Centro Cultural de la institución, en San Miguel de Tucumán, y fue mucho más que un acto académico: se trató de un homenaje simbólico que reunió a referentes del sector públic
-- Un acto cargado de emoción y sentido político para el desarrollo bioenergético
+## Tecnología (biotech)
 
 ### FTC and congressional oversight leader take aim at PBMs again [AR]
 *2025-08-29* — https://endpoints.news/ftc-and-congressional-oversight-leader-take-aim-at-pbms-again/
@@ -63,25 +57,13 @@
 - Frente a la necesidad de desfosilizar las cadenas industriales sin perder funcionalidad ni escala, la multinacional japonesa Sumitomo Chemical dio un paso clave: inició la operación de una planta piloto que convierte eta
 - Instalada en el área industrial de Sodegaura, en el polo químico de Chiba, la planta busca demostrar la viabilidad técnica de este proceso, con vistas a una futura industrialización en la primera mitad de la década de 20
 
-## Finanzas (rondas/grants) — 10 items
-
-### AgendaPro raises $35M, Ep 215 [AR|FIN]
-*2025-08-26* — https://latamlist.com/agendapro-raises-35m-ep-215/
-- This week’s Espresso covers news from Digitt, Kira, Rappi and more!
-- Outline of this episode:
-- - [00:30] – AgendaPro raises $35M from Riverwood Capital
+## Finanzas (rondas/grants)
 
 ### La sostenibilidad ya no se juega solo en el campo, sino en la cadena [AR|FIN]
 *2025-08-28* — https://www.bioeconomia.info/2025/08/28/agricultura-regenerativa-syngenta/
 - En el campo argentino, hace tiempo que la sostenibilidad ha dejado de ser un discurso aspiracional. Es una práctica concreta, cotidiana, instalada. No hace falta convencer a un productor de que la siembra directa protege
 - Con ese telón de fondo, Syngenta presentó esta semana una iniciativa que merece atención por su arquitectura: un programa de abastecimiento sustentable de aceite de girasol desarrollado junto a Pepsico y productores arge
 - Mariale Álvarez, directora de Sustentabilidad y Asuntos Corporativos LATAM de Syngenta, lo dijo sin vueltas: el agro es uno de los pocos sectores que puede ser sostenible sin perder rentabilidad. Y al toque puso el dedo 
-
-### Whalemate raises $1M for cybersecurity platform [AR|FIN]
-*2025-08-27* — https://latamlist.com/whalemate-raises-1m-for-cybersecurity-platform/
-- Argentine startup Whalemate raised a $1M funding round led by Parceiro Ventures.
-- Founded by Federico Joel Hombre and Mateo Bovio, Whalemate offers a SaaS solution to train employees against digital threats like phishing. Whalemate’s platform sends employees personalized attack simulations and provide
-- Whalemate will use the funds to scale its platform in Latin America, with a strategic focus on the Peruvian market.
 
 ### Inversión de 1700 millones de euros para poner en marcha la línea de packaging renovable mas moderna del mundo [AR|FIN]
 *2025-08-27* — https://www.bioeconomia.info/2025/08/27/packaging-renovable-stora-enso/
@@ -112,12 +94,6 @@
 - Spanish mobility startup Busup raised $5.8M in a round led by Bonsai Partners.
 - Busup manages employee shuttle services for large companies, using a digital platform and AI to design routes, contract local bus operators, and run day-to-day transport without owning a fleet.
 - Busup will use funds to expand internationally and launch new business verticals.
-
-### Por qué Uruguay se ha convertido en un ejemplo de crecimiento sostenible [AR|FIN]
-*2025-08-26* — https://www.bioeconomia.info/2025/08/26/energia-de-la-biomasa-en-uruguay-matriz-renovable-2024/
-- El contexto no podría ser más desafiante. En 2024, el producto interno bruto de Uruguay creció un 3,1 % y el consumo energético final aumentó un 13,6 %. A pesar de esa expansión, las emisiones del sector se mantuvieron e
-- A 157 metros del suelo, en lo alto de la Torre de las Telecomunicaciones de Montevideo —el edificio más alto del país y símbolo de conexión y progreso—, la ministra de Industria, Energía y Minería, Fernanda Cardona, pres
-- La biomasa deja de ser residual y pasa al centro del sistema
 
 ### The Sanofi pipeline in 2025: Is the play-to-win strategy working? [AR|FIN]
 *2025-08-22* — https://www.labiotech.eu/in-depth/sanofi-pipeline-2025/
