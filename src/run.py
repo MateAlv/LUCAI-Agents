@@ -1,6 +1,7 @@
 ﻿# src/run.py
 from __future__ import annotations
 
+# --- SSL helpers (Windows) ---
 try:
     import truststore
     truststore.inject_into_ssl()   # usa la trust store nativa de Windows
@@ -11,14 +12,6 @@ try:
     import certifi_win32  # usa el store de certificados de Windows
 except Exception:
     pass
-
-# arriba
-from summarize.summary import summarize as summarize_extractive
-try:
-    from summarize.llm_summarizer import summarize_llm
-except Exception:
-    summarize_llm = None
-
 
 import logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -49,6 +42,12 @@ from render.to_markdown import render_md_by_sections
 from rank.score import compute_scores, mmr_select
 from critic.auto_critic import run as critic_run
 
+# LLM summarizer (opcional, via llama.cpp server)
+try:
+    from summarize.llm_summarizer import summarize_llm
+except Exception:
+    summarize_llm = None
+
 UA = {"User-Agent": "Mozilla/5.0 (compatible; BioWatchdog/0.1)"}
 
 
@@ -73,7 +72,7 @@ def main():
     items: List[Dict] = []
 
     # 1) RSS
-    for rss in cfg.get("sources", {}).get("rss", []) or []:
+    for rss in (cfg.get("sources", {}).get("rss", []) or []):
         for it in fetch_rss(rss, max_items=max_items // 2 or 10):
             items.append(
                 {
@@ -86,32 +85,31 @@ def main():
                 }
             )
 
-    # 1.b) HTML pages AR sin RSS (lista de noticias)
-    for page in cfg.get("sources", {}).get("html_pages", []) or []:
+    # 1.b) HTML pages (listas sin RSS)
+    for page in (cfg.get("sources", {}).get("html_pages", []) or []):
         page_url = page.get("page_url")
         link_selector = page.get("link_selector")
         limit = page.get("limit", 6)
         verify_ssl = page.get("verify_ssl", True)
-        verify_cert_path = page.get("verify_cert_path")  # si algún día querés forzar un PEM
+        verify_cert_path = page.get("verify_cert_path")
         min_text_chars = page.get("min_text_chars", 300)
 
-        # (si estás resolviendo ruta relativa de verify_cert_path, mantené ese bloque)
         for it in fetch_html_list(page_url,
-                                link_selector,
-                                limit=limit,
-                                verify_ssl=verify_ssl,
-                                verify_cert_path=verify_cert_path,
-                                min_text_chars=min_text_chars):
+                                  link_selector,
+                                  limit=limit,
+                                  verify_ssl=verify_ssl,
+                                  verify_cert_path=verify_cert_path,
+                                  min_text_chars=min_text_chars):
             items.append({
                 "url": it.url,
                 "title": it.title,
                 "published_at": it.published_at,
                 "source": it.source,
                 "text": it.text,
-                "source_tag": "html", 
+                "source_tag": "html",
             })
-    
-    # 2) PUBMED — tolerante a fallos
+
+    # 2) PubMed
     pubmed_cfg = (cfg.get("sources", {}).get("apis", {}).get("pubmed") or {})
     if pubmed_cfg.get("enabled"):
         term = pubmed_cfg.get("query") or "biotechnology OR synthetic biology OR CRISPR OR bioinformatics"
@@ -126,7 +124,7 @@ def main():
                 "source_tag": it.source_tag
             })
 
-    # 2.b) arXiv (q-bio / CRISPR / synbio)
+    # 2.b) arXiv
     if cfg.get("sources", {}).get("apis", {}).get("arxiv"):
         arxiv_q = 'cat:q-bio OR CRISPR OR "synthetic biology"'
         for it in search_arxiv(arxiv_q, days=freshness_days, max_results=max_items//2 or 10):
@@ -167,7 +165,7 @@ def main():
     for it in items[: max_items]:
         if not it.get("text"):
             it["text"] = fetch_html_text(it["url"])
-    
+
     # 4.b) Filtro de calidad global con whitelist de fuentes cortas
     qcfg = cfg.get("quality", {}) or {}
     min_chars_global = int(qcfg.get("min_text_chars", 0) or 0)
@@ -182,55 +180,56 @@ def main():
         items = kept
         print(f"Filtro calidad: {before} -> {len(items)} ítems (>= {min_chars_global} chars o tag en {list(allow_short)})")
 
-    # 5) Flags AR + FIN y resumen + validación scope
+    # 5) Flags AR/FIN + resumen (LLM si está habilitado)
+    llmcfg = cfg.get("llm_summary", {}) or {}
+    print("llm_summary cfg:", cfg.get("llm_summary", {}))
+    use_llm = bool(llmcfg.get("enabled")) and summarize_llm is not None
+    min_llm_chars = int(llmcfg.get("min_chars", 400))
+    print("Resumen LLM:", "ON" if use_llm else "OFF (extractivo)")
+
     for it in items:
         blob = (it.get("text") or "") + " " + (it.get("title") or "")
         it["is_ar"] = is_argentina(blob, it.get("url", ""), it.get("country_hint"))
-        it["is_fin"] = has_funding(it.get("text", ""), it.get("title", ""))
-        llmcfg = cfg.get("llm_summary", {}) or {}
-        use_llm = bool(llmcfg.get("enabled")) and summarize_llm is not None
-        for it in items:
-            blob = (it.get("text") or "") + " " + (it.get("title") or "")
-            it["is_ar"] = is_argentina(blob, it.get("url", ""), it.get("country_hint"))
-            it["is_fin"] = has_funding(it.get("text",""), it.get("title",""))
-            try:
-                if use_llm:
-                    it["summary"] = summarize_llm(it.get("text",""), it.get("title",""), llmcfg)
-                else:
-                    it["summary"] = summarize_extractive(it.get("text",""), title=it.get("title",""))
-            except Exception as e:
-                logging.warning(f"LLM summary falló ({e}), uso extractivo.")
-                it["summary"] = summarize_extractive(it.get("text",""), title=it.get("title",""))
+        it["is_fin"] = has_funding(it.get("text",""), it.get("title",""))
+        try:
+            text = it.get("text","")
+            if use_llm and len(text) >= min_llm_chars:
+                it["summary"] = summarize_llm(text, it.get("title",""), llmcfg)
+            else:
+                it["summary"] = summarize_extractive(text, title=it.get("title",""))
+        except Exception as e:
+            logging.warning(f"LLM summary falló ({e}), uso extractivo.")
+            it["summary"] = summarize_extractive(it.get("text",""), title=it.get("title",""))
 
+    # 5.b) Filtro de scope (biotech)
     before = len(items)
     items = [it for it in items if on_scope((it.get("title","")+" "+it.get("text","")), mode="soft")]
     print(f"Filtro scope biotech: {before} -> {len(items)} ítems")
 
-    # === 6) SCORING INICIAL (sobre todos los items tras calidad/flags) ===
+    # 6) Scoring inicial
     items, emb_items = compute_scores(cfg, items)
 
-    # === 6.a) CRÍTICO: poda ruido y baja score ===
+    # 6.a) Crítico (poda/demote)
     before = len(items)
     items, dropped = critic_run(items, cfg)
     print(f"Crítico: {before} -> {len(items)} kept (dropped {len(dropped)})")
     from collections import Counter
     print("Motivos drop:", Counter([d.get("drop_reason") for d in dropped]))
 
-    # === 6.b) RE-SCORING (solo con los kept) ===
+    # 6.b) Re-scoring post-crítico
     items, emb_items = compute_scores(cfg, items)
     print("Embeddings:", "ON" if emb_items is not None else "OFF (fallback keywords)")
 
-    # === 6.c) CLASIFICACIÓN por sección (solo con kept) ===
+    # 6.c) Clasificación por sección
     by_sec = {"tech": [], "finance": [], "academic": []}
     for it in items:
         sec = classify(it, cfg)
         by_sec.setdefault(sec, []).append(it)
 
-    # === 6.d) MMR / top-K por sección (solo con kept) ===
+    # 6.d) MMR / top-K por sección
     import numpy as np
     max_k = int(cfg.get("max_items_per_section", cfg.get("max_items", 20)))
 
-    # mapa de embeddings alineado a 'items' actuales (si hay embeddings)
     emb_map = None
     if emb_items is not None:
         emb_map = {id(it): emb_items[idx] for idx, it in enumerate(items)}
@@ -260,8 +259,7 @@ def main():
 
         final_by_sec[sec] = sec_final
 
-
-    # 7) Render seccionado a Markdown
+    # 7) Render a Markdown
     outdir = Path("output")
     outdir.mkdir(exist_ok=True)
     outname = outdir / f"newsletter_{dt.datetime.now().strftime('%Y%m%d')}.md"
@@ -269,6 +267,7 @@ def main():
     outname.write_text(md, encoding="utf-8")
     print(f"OK -> {outname}")
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
