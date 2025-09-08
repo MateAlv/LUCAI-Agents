@@ -12,6 +12,14 @@ try:
 except Exception:
     pass
 
+# arriba
+from summarize.summary import summarize as summarize_extractive
+try:
+    from summarize.llm_summarizer import summarize_llm
+except Exception:
+    summarize_llm = None
+
+
 import logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
@@ -30,10 +38,11 @@ from sources.html_list import fetch_list as fetch_html_list
 from sources.gdelt import search_gdelt
 from sources.arxiv import search_arxiv
 from sources.clinicaltrials import search_clinicaltrials_arg
+from sources.pubmed import search_pubmed
 
 from enrich.flags import is_argentina, has_funding
 from enrich.scope import on_scope
-from summarize.summary import summarize
+from summarize.summary import summarize_extractive
 from categorize import classify
 from render.to_markdown import render_md_by_sections
 
@@ -101,23 +110,22 @@ def main():
                 "text": it.text,
                 "source_tag": "html", 
             })
+    
+    # 2) PUBMED — tolerante a fallos
+    pubmed_cfg = (cfg.get("sources", {}).get("apis", {}).get("pubmed") or {})
+    if pubmed_cfg.get("enabled"):
+        term = pubmed_cfg.get("query") or "biotechnology OR synthetic biology OR CRISPR OR bioinformatics"
+        retmax = int(pubmed_cfg.get("retmax", 20))
+        for it in search_pubmed(term, retmax=retmax):
+            items.append({
+                "url": it.url,
+                "title": it.title,
+                "published_at": it.published_at,
+                "source": it.source,
+                "text": it.text,
+                "source_tag": it.source_tag
+            })
 
-    # 2) GDELT (si está habilitado) — tolerante a fallos
-    if cfg.get("sources", {}).get("apis", {}).get("gdelt"):
-        q_core = "biotech OR genomics OR bioinformatics OR CRISPR OR drug discovery"
-        gd_global = search_gdelt(q_core, days=freshness_days, country=None, maxrecords=max_items)
-        gd_ar = search_gdelt(q_core, days=freshness_days, country="AR", maxrecords=max_items // 2 or 10)
-        for it in (gd_global + gd_ar):
-            items.append(
-                {
-                    "url": it.url,
-                    "title": it.title,
-                    "published_at": it.published_at,
-                    "source": "gdelt",
-                    "text": "",
-                    "country_hint": it.country,
-                }
-            )
     # 2.b) arXiv (q-bio / CRISPR / synbio)
     if cfg.get("sources", {}).get("apis", {}).get("arxiv"):
         arxiv_q = 'cat:q-bio OR CRISPR OR "synthetic biology"'
@@ -179,7 +187,20 @@ def main():
         blob = (it.get("text") or "") + " " + (it.get("title") or "")
         it["is_ar"] = is_argentina(blob, it.get("url", ""), it.get("country_hint"))
         it["is_fin"] = has_funding(it.get("text", ""), it.get("title", ""))
-        it["summary"] = summarize(it.get("text", ""), title=it.get("title", ""))
+        llmcfg = cfg.get("llm_summary", {}) or {}
+        use_llm = bool(llmcfg.get("enabled")) and summarize_llm is not None
+        for it in items:
+            blob = (it.get("text") or "") + " " + (it.get("title") or "")
+            it["is_ar"] = is_argentina(blob, it.get("url", ""), it.get("country_hint"))
+            it["is_fin"] = has_funding(it.get("text",""), it.get("title",""))
+            try:
+                if use_llm:
+                    it["summary"] = summarize_llm(it.get("text",""), it.get("title",""), llmcfg)
+                else:
+                    it["summary"] = summarize_extractive(it.get("text",""), title=it.get("title",""))
+            except Exception as e:
+                logging.warning(f"LLM summary falló ({e}), uso extractivo.")
+                it["summary"] = summarize_extractive(it.get("text",""), title=it.get("title",""))
 
     before = len(items)
     items = [it for it in items if on_scope((it.get("title","")+" "+it.get("text","")), mode="soft")]
@@ -197,6 +218,7 @@ def main():
 
     # === 6.b) RE-SCORING (solo con los kept) ===
     items, emb_items = compute_scores(cfg, items)
+    print("Embeddings:", "ON" if emb_items is not None else "OFF (fallback keywords)")
 
     # === 6.c) CLASIFICACIÓN por sección (solo con kept) ===
     by_sec = {"tech": [], "finance": [], "academic": []}

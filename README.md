@@ -12,6 +12,44 @@ Se están estudiando dos opciones viables:
 
 Qué hace: ingesta noticias (RSS/HTML), papers (arXiv) y registros clínicos (ClinicalTrials), les saca el jugo (resumen, flags, score), filtra ruido automáticamente y genera un newsletter en Markdown seccionado (Tech / Finanzas / Académico). Todo on-prem y en Python puro.
 
+---
+
+## Requisitos
+- Python **3.11+**
+- Git
+- (Opcional) GPU para acelerar embeddings
+
+> En Windows, si PowerShell bloquea la venv: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+
+---
+
+## Instalación rápida
+
+```bash
+git clone https://github.com/MateAlv/LUCAI-Agents.git
+cd LUCAI-Agents
+
+# Crear venv
+# Windows
+py -3.11 -m venv .venv && .\.venv\Scripts\Activate.ps1
+# UNIX/macOS
+# python3 -m venv .venv && source .venv/bin/activate
+
+# Dependencias (modo liviano, sin embeddings)
+pip install -U pip
+pip install requests pyyaml feedparser trafilatura python-dateutil
+
+# (Opcional) Embeddings + MMR (modo full)
+# pip install sentence-transformers
+# (Windows SSL más robusto) pip install truststore python-certifi-win32
+```
+## Ejecutar
+
+Perfil LUCAI.bio
+```bash
+python src/run.py --config config/lucai.yaml
+```
+
 ## Flujo:
 sources → clean → flags+summary → score → critic → re-score → classify → MMR → markdown
 

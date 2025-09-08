@@ -2,7 +2,7 @@
 from __future__ import annotations
 import requests, textwrap
 
-def summarize(text: str, title: str = "", model: str = "llama3:8b", max_chars: int = 1000) -> str:
+def summarize_extractive(text: str, title: str = "", model: str = "llama3:8b", max_chars: int = 1000) -> str:
     if not text:
         return "- (sin contenido extraíble)"
     chunk = text[: max_chars]
